@@ -4,110 +4,97 @@ import Test from "@/models/Test";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
+export async function POST(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ message: "Kirish shart" }, { status: 401 });
+
+    const { title, visibility, blockId, questions } = await request.json();
+    await connectMongoDB();
+
+    // MUHIM: Savollar sonini aynan shu yerda hisoblab bazaga yozamiz (0 bo'lmasligi uchun)
+    const questionCount = questions ? questions.length : 0;
+
+    const newTest = await Test.create({
+      title,
+      visibility,
+      blockId,
+      questions,
+      questionCount, 
+      userId: session.user.id,
+    });
+
+    return NextResponse.json({ message: "Test yaratildi", test: newTest }, { status: 201 });
+  } catch (error) {
+    console.log("POST xatosi:", error);
+    return NextResponse.json({ message: "Server xatosi" }, { status: 500 });
+  }
+}
+
 export async function GET(request) {
   try {
     await connectMongoDB();
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
     const blockId = searchParams.get("blockId");
-    const isPublic = searchParams.get("public") === "true";
+    const id = searchParams.get("id");
+    const isPublic = searchParams.get("public");
 
-    // A: BITTA TEST SO'RALGANDA (Ishlash sahifasi uchun)
     if (id) {
       const test = await Test.findById(id);
-      if (!test) return NextResponse.json({ message: "Test topilmadi" }, { status: 404 });
-
-      // HIMOYALANGAN TEKSHIRUV: Bo'sh joylar va katta harflarni tozalab tekshiramiz
-      const visibility = (test.visibility || "private").toLowerCase().trim();
-
-      if (visibility === "public") {
-        return NextResponse.json({ test }, { status: 200 }); // Hamma uchun ochiq
-      }
-
-      // Agar Private bo'lsa, faqat egasiga ko'rsatamiz
-      const session = await getServerSession(authOptions);
-      if (!session || test.userId?.toString() !== session.user.id) {
-        return NextResponse.json({ message: "Bu shaxsiy test, ruxsat yo'q" }, { status: 403 });
-      }
-
       return NextResponse.json({ test }, { status: 200 });
     }
 
-    // B: OMMAVIY TESTLAR RO'YXATI
-    if (isPublic) {
-      const tests = await Test.find({ 
-        visibility: { $in: ["Public", "public", "PUBLIC"] } 
-      }).sort({ createdAt: -1 });
-      
+    if (blockId) {
+      const tests = await Test.find({ blockId }).sort({ createdAt: -1 });
       return NextResponse.json({ tests }, { status: 200 });
     }
 
-    // C: SHAXSIY TESTLAR RO'YXATI (Dashboard)
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Login shart" }, { status: 401 });
+    if (isPublic === "true") {
+      const tests = await Test.find({ visibility: "Public" }).sort({ createdAt: -1 });
+      return NextResponse.json({ tests }, { status: 200 });
+    }
 
-    const query = { userId: session.user.id };
-    if (blockId) query.blockId = blockId;
-    
-    const tests = await Test.find(query).sort({ createdAt: -1 });
-    return NextResponse.json({ tests }, { status: 200 });
-
+    return NextResponse.json({ message: "Parametr yetishmayapti" }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ message: "Server xatosi" }, { status: 500 });
   }
 }
 
-export async function POST(request) {
+export async function DELETE(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    
-    const data = await request.json();
     await connectMongoDB();
-
-    const existingTest = await Test.findOne({ title: data.title, userId: session.user.id });
-    if (existingTest) {
-      return NextResponse.json({ message: "Bunday nomdagi test allaqachon mavjud!" }, { status: 400 });
-    }
-
-    const newTest = await Test.create({ ...data, userId: session.user.id });
-    return NextResponse.json({ test: newTest }, { status: 201 });
-  } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    await Test.findByIdAndDelete(id);
+    return NextResponse.json({ message: "Test o'chirildi" }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Server xatosi" }, { status: 500 });
   }
 }
 
-export async function DELETE(request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Ruxsat yo'q" }, { status: 401 });
-    
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    
-    await connectMongoDB();
-    await Test.findOneAndDelete({ _id: id, userId: session.user.id });
-    return NextResponse.json({ message: "O'chirildi" });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
-}
-
+// ==========================================================
+// YANGI: TAHRIRLASH UCHUN (PUT METODI)
+// ==========================================================
 export async function PUT(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: "Ruxsat yo'q" }, { status: 401 });
-    
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const data = await request.json();
-    
+    if (!session) return NextResponse.json({ message: "Kirish shart" }, { status: 401 });
+
+    const { id, title, visibility, questions } = await request.json();
     await connectMongoDB();
 
-    if (data.title) {
-      const existingTest = await Test.findOne({ _id: { $ne: id }, title: data.title, userId: session.user.id });
-      if (existingTest) return NextResponse.json({ message: "Bunday nomdagi test allaqachon mavjud!" }, { status: 400 });
-    }
+    // Yangilangan savollar sonini qayta hisoblaymiz
+    const questionCount = questions ? questions.length : 0;
 
-    await Test.findOneAndUpdate({ _id: id, userId: session.user.id }, data);
-    return NextResponse.json({ message: "Yangilandi" });
-  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+    const updatedTest = await Test.findByIdAndUpdate(
+      id,
+      { title, visibility, questions, questionCount },
+      { new: true } // Yangilangan faylni qaytarish
+    );
+
+    return NextResponse.json({ message: "Test yangilandi", test: updatedTest }, { status: 200 });
+  } catch (error) {
+    console.log("PUT xatosi:", error);
+    return NextResponse.json({ message: "Server xatosi" }, { status: 500 });
+  }
 }
