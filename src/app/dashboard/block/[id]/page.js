@@ -25,14 +25,28 @@ export default function BlockDetails() {
 
   // 1. BLOK VA TESTLARNI YUKLASH
   const fetchBlockData = async () => {
+    if (!blockId) return;
     try {
+      // API call to fetch specific block details
       const blockRes = await fetch(`/api/blocks?id=${blockId}`);
-      const blockData = await blockRes.json();
-      if (blockRes.ok) setBlock(blockData.block);
+      if (blockRes.ok) {
+        const blockData = await blockRes.json();
+        // Here we ensure we set the block properly if it exists
+        if (blockData.block) {
+           setBlock(blockData.block);
+        } else if (Array.isArray(blockData.blocks)) {
+           // Agar array qaytarsa, qidirib topish
+           const foundBlock = blockData.blocks.find(b => b._id === blockId);
+           setBlock(foundBlock || null);
+        }
+      }
 
+      // API call to fetch tests associated with this block
       const testsRes = await fetch(`/api/tests?blockId=${blockId}`);
-      const testsData = await testsRes.json();
-      if (testsRes.ok) setTests(testsData.tests || []);
+      if (testsRes.ok) {
+         const testsData = await testsRes.json();
+         setTests(testsData.tests || []);
+      }
       
     } catch (err) {
       console.log("Ma'lumotlarni yuklashda xato", err);
@@ -67,14 +81,14 @@ export default function BlockDetails() {
             isValid = false;
           }
           return {
-            text: q.question, // API miz "text" deb qabul qiladi
+            text: q.question, 
             options: q.options,
             answer: q.answer
           };
         });
 
         if (isValid && formattedQuestions.length > 0) {
-          return formattedQuestions; // JSON to'g'ri bo'lsa, qaytaramiz!
+          return formattedQuestions;
         }
       }
     } catch (error) {
@@ -149,14 +163,13 @@ export default function BlockDetails() {
         setTitle("");
         setRawQuestions("");
         setVisibility("Public");
-        fetchBlockData(); // Testlar ro'yxatini yangilaymiz
+        fetchBlockData();
       } else {
         setError(data.message || "Xatolik yuz berdi");
       }
     } catch (err) {
       setError("Server xatosi. Qaytadan urinib ko'ring.");
     } finally {
-      setIsLoading(false);
       setIsSubmitting(false);
     }
   };
