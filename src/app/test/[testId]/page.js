@@ -532,7 +532,6 @@ export default function TakeTest() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
