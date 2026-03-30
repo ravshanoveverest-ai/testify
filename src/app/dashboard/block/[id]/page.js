@@ -14,6 +14,9 @@ export default function BlockDetails() {
   const [tests, setTests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // MODAL STATE
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
   // YANGI TEST YARATISH STATE'LARI
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState("Public");
@@ -27,21 +30,17 @@ export default function BlockDetails() {
   const fetchBlockData = async () => {
     if (!blockId) return;
     try {
-      // API call to fetch specific block details
       const blockRes = await fetch(`/api/blocks?id=${blockId}`);
       if (blockRes.ok) {
         const blockData = await blockRes.json();
-        // Here we ensure we set the block properly if it exists
         if (blockData.block) {
            setBlock(blockData.block);
         } else if (Array.isArray(blockData.blocks)) {
-           // Agar array qaytarsa, qidirib topish
            const foundBlock = blockData.blocks.find(b => b._id === blockId);
            setBlock(foundBlock || null);
         }
       }
 
-      // API call to fetch tests associated with this block
       const testsRes = await fetch(`/api/tests?blockId=${blockId}`);
       if (testsRes.ok) {
          const testsData = await testsRes.json();
@@ -63,46 +62,29 @@ export default function BlockDetails() {
     }
   }, [status, blockId, router]);
 
-  // =========================================================================
-  // 2. SAVOLLARNI PARS QILISH (TXT VA JSON QO'LLAB-QUVVATLANADI)
-  // =========================================================================
+  // 2. SAVOLLARNI PARS QILISH (TXT VA JSON)
   const parseQuestions = (inputText) => {
     const text = inputText.trim();
     if (!text) return [];
 
-    // URINISH 1: JSON FORMATNI TEKSHIRISH
     try {
       const parsedJson = JSON.parse(text);
-      
       if (Array.isArray(parsedJson)) {
         let isValid = true;
         const formattedQuestions = parsedJson.map((q) => {
-          if (!q.question || !Array.isArray(q.options) || !q.answer) {
-            isValid = false;
-          }
-          return {
-            text: q.question, 
-            options: q.options,
-            answer: q.answer
-          };
+          if (!q.question || !Array.isArray(q.options) || !q.answer) isValid = false;
+          return { text: q.question, options: q.options, answer: q.answer };
         });
-
-        if (isValid && formattedQuestions.length > 0) {
-          return formattedQuestions;
-        }
+        if (isValid && formattedQuestions.length > 0) return formattedQuestions;
       }
-    } catch (error) {
-      // JSON emas ekan. Xato bermaymiz, TXT deb o'ylab pastga o'tamiz.
-    }
+    } catch (error) {}
 
-    // URINISH 2: ODATIY TXT FORMATNI TEKSHIRISH
     const lines = text.split("\n").map(line => line.trim()).filter(line => line !== "");
     const questions = [];
     let currentQuestion = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-
       if (/^\d+[\.\)]/.test(line)) {
         if (currentQuestion && currentQuestion.text && currentQuestion.options.length >= 2 && currentQuestion.answer) {
           questions.push(currentQuestion);
@@ -110,14 +92,10 @@ export default function BlockDetails() {
         currentQuestion = { text: line.replace(/^\d+[\.\)]\s*/, ""), options: [], answer: "" };
       } 
       else if (/^[A-Da-d][\)\.]/.test(line)) {
-        if (currentQuestion) {
-          currentQuestion.options.push(line.replace(/^[A-Da-d][\)\.]\s*/, ""));
-        }
+        if (currentQuestion) currentQuestion.options.push(line.replace(/^[A-Da-d][\)\.]\s*/, ""));
       } 
       else if (/^Javob:/i.test(line)) {
-        if (currentQuestion) {
-          currentQuestion.answer = line.replace(/^Javob:\s*/i, "");
-        }
+        if (currentQuestion) currentQuestion.answer = line.replace(/^Javob:\s*/i, "");
       }
     }
 
@@ -135,12 +113,8 @@ export default function BlockDetails() {
     setSuccess("");
 
     if (!title.trim()) return setError("Test sarlavhasini kiriting!");
-    
     const parsedQuestions = parseQuestions(rawQuestions);
-    
-    if (parsedQuestions.length === 0) {
-      return setError("Savollarni to'g'ri formatda kiriting (TXT yoki JSON)");
-    }
+    if (parsedQuestions.length === 0) return setError("Savollarni to'g'ri formatda kiriting (TXT yoki JSON)");
 
     setIsSubmitting(true);
 
@@ -148,23 +122,17 @@ export default function BlockDetails() {
       const res = await fetch("/api/tests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          visibility,
-          blockId,
-          questions: parsedQuestions
-        }),
+        body: JSON.stringify({ title, visibility, blockId, questions: parsedQuestions }),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
-        setSuccess(`Muvaffaqiyatli! ${parsedQuestions.length} ta savol qo'shildi.`);
         setTitle("");
         setRawQuestions("");
         setVisibility("Public");
         fetchBlockData();
+        setIsCreateModalOpen(false); // Modalni yopish
       } else {
+        const data = await res.json();
         setError(data.message || "Xatolik yuz berdi");
       }
     } catch (err) {
@@ -203,69 +171,160 @@ export default function BlockDetails() {
     );
   }
 
+  // TESTLARNI IKKIGA AJRATAMIZ
+  const publicTests = tests.filter(test => test.visibility === "Public");
+  const privateTests = tests.filter(test => test.visibility === "Private");
+
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 mt-4">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 mt-4">
       
-      {/* HEADER QISMI */}
-      <div className="flex justify-between items-center mb-10">
+      {/* HEADER QISMI VA TUGMA */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
         <div>
           <Link href="/dashboard" className="text-gray-400 font-bold hover:text-blue-600 transition-colors text-sm mb-2 inline-block">
             &larr; Bloklarga qaytish
           </Link>
-          <h1 className="text-3xl sm:text-4xl font-black text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-black text-gray-900 flex items-center gap-3 mt-1">
             <span className="text-4xl">{block.icon}</span> {block.name}
           </h1>
         </div>
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-black hover:bg-blue-700 transition-all shadow-md active:scale-95 flex items-center gap-2 whitespace-nowrap"
+        >
+          <span className="text-xl">+</span> Yangi test yaratish
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* CHAP TOMON: TEST YARATISH FORMASI */}
-        <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm animate-pop">
-          <h2 className="text-2xl font-black text-gray-900 mb-6">Yangi Test Yaratish 📝</h2>
+      <div className="space-y-12">
+        {/* ========================================= */}
+        {/* OMMAVIY TESTLAR (PUBLIC) */}
+        {/* ========================================= */}
+        <section>
+          <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+            🌍 Ommaviy Testlar <span className="text-sm font-bold bg-blue-100 text-blue-600 px-3 py-1 rounded-full ml-2">{publicTests.length}</span>
+          </h2>
           
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm font-bold flex items-center gap-2">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-50 text-green-700 p-4 rounded-2xl mb-6 text-sm font-bold flex items-center gap-2">
-              <span>✅</span> {success}
-            </div>
-          )}
-
-          <form onSubmit={handleCreateTest} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Test sarlavhasi</label>
-                <input 
-                  type="text" 
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Masalan: Tarix 1-qism" 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-gray-800 outline-none transition-all"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {publicTests.length > 0 ? (
+              publicTests.map((test) => (
+                <div key={test._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group flex flex-col justify-between h-full">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">{test.title}</h3>
+                    <p className="text-sm text-gray-500 font-medium">{test.questionCount} ta savol • Barchaga ochiq</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-auto">
+                    <Link href={`/test/${test._id}`} className="flex-1 bg-gray-900 text-white text-center px-4 py-2.5 rounded-xl font-bold hover:bg-black transition-colors text-sm">
+                      Ishlash
+                    </Link>
+                    <button onClick={() => alert("Tahrirlash funksiyasi tez kunda qo'shiladi!")} className="px-4 py-2.5 bg-yellow-50 text-yellow-600 hover:bg-yellow-100 font-bold rounded-xl transition-colors text-sm">
+                      Tahrirlash
+                    </button>
+                    <button onClick={() => handleDeleteTest(test._id)} className="px-4 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-xl transition-colors text-sm">
+                      O'chirish
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full p-10 bg-white rounded-[2rem] border border-dashed border-gray-200 text-center">
+                <p className="text-gray-500 font-bold">Ommaviy testlar mavjud emas.</p>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Kimlar ko'ra oladi?</label>
-                <select 
-                  value={visibility}
-                  onChange={(e) => setVisibility(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-gray-800 outline-none transition-all"
-                >
-                  <option value="Public">🌍 Ommaviy (Hamma)</option>
-                  <option value="Private">🔒 Shaxsiy (Faqat men)</option>
-                </select>
-              </div>
-            </div>
+            )}
+          </div>
+        </section>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Savollar matni (TXT yoki JSON formatda)</label>
-              
-              <div className="bg-blue-50 p-4 rounded-xl mb-3 border border-blue-100 text-sm">
-                <p className="font-bold text-blue-700 mb-2">JSON formati namunasi:</p>
-                <pre className="text-blue-600 text-xs overflow-x-auto whitespace-pre-wrap font-mono">
+        {/* ========================================= */}
+        {/* SHAXSIY TESTLAR (PRIVATE) */}
+        {/* ========================================= */}
+        <section>
+          <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+            🔒 Shaxsiy Testlar <span className="text-sm font-bold bg-orange-100 text-orange-600 px-3 py-1 rounded-full ml-2">{privateTests.length}</span>
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {privateTests.length > 0 ? (
+              privateTests.map((test) => (
+                <div key={test._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group flex flex-col justify-between h-full opacity-90">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2 mb-2">{test.title}</h3>
+                    <p className="text-sm text-gray-500 font-medium">{test.questionCount} ta savol • Faqat o'zingiz uchun</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-auto">
+                    <Link href={`/test/${test._id}`} className="flex-1 bg-gray-900 text-white text-center px-4 py-2.5 rounded-xl font-bold hover:bg-black transition-colors text-sm">
+                      Ishlash
+                    </Link>
+                    <button onClick={() => alert("Tahrirlash funksiyasi tez kunda qo'shiladi!")} className="px-4 py-2.5 bg-yellow-50 text-yellow-600 hover:bg-yellow-100 font-bold rounded-xl transition-colors text-sm">
+                      Tahrirlash
+                    </button>
+                    <button onClick={() => handleDeleteTest(test._id)} className="px-4 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-xl transition-colors text-sm">
+                      O'chirish
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full p-10 bg-white rounded-[2rem] border border-dashed border-gray-200 text-center">
+                <p className="text-gray-500 font-bold">Shaxsiy testlar mavjud emas.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* ================================================= */}
+      {/* YANGI TEST YARATISH MODALI (POP-UP) */}
+      {/* ================================================= */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay overflow-y-auto">
+          <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-2xl w-full shadow-2xl animate-pop relative my-8">
+            
+            <button 
+              onClick={() => setIsCreateModalOpen(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-black text-gray-900 mb-6 pr-10">Yangi Test Yaratish 📝</h2>
+            
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold flex items-center gap-2">
+                <span>⚠️</span> {error}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateTest} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Test sarlavhasi</label>
+                  <input 
+                    type="text" 
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Masalan: Tarix 1-qism" 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-gray-800 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Kimlar ko'ra oladi?</label>
+                  <select 
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-gray-800 outline-none transition-all"
+                  >
+                    <option value="Public">🌍 Ommaviy (Hamma)</option>
+                    <option value="Private">🔒 Shaxsiy (Faqat men)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Savollar matni (TXT yoki JSON)</label>
+                
+                <div className="bg-blue-50 p-4 rounded-xl mb-3 border border-blue-100 text-sm">
+                  <p className="font-bold text-blue-700 mb-2">JSON formati namunasi:</p>
+                  <pre className="text-blue-600 text-xs overflow-x-auto whitespace-pre-wrap font-mono">
 {`[
   {
     "question": "O'zbekiston poytaxti qayer?",
@@ -273,71 +332,39 @@ export default function BlockDetails() {
     "answer": "Toshkent"
   }
 ]`}
-                </pre>
-              </div>
-
-              <textarea 
-                rows="10" 
-                value={rawQuestions}
-                onChange={(e) => setRawQuestions(e.target.value)}
-                placeholder="Bu yerga TXT yoki JSON formatda savollarni tashlang..." 
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-gray-800 outline-none transition-all resize-y custom-scrollbar"
-              ></textarea>
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
-            >
-              {isSubmitting ? "Yaratilmoqda..." : "Saqlash va Yaratish"}
-            </button>
-          </form>
-        </div>
-
-        {/* O'NG TOMON: MAVJUD TESTLAR RO'YXATI */}
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 mb-6 px-2">Ushbu blokdagi testlar</h2>
-          
-          <div className="space-y-4">
-            {tests.length > 0 ? (
-              tests.map((test) => (
-                <div key={test._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-blue-200 transition-colors group">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{test.title}</h3>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 font-medium">
-                      <span>{test.questionCount} ta savol</span>
-                      <span className="text-gray-300">&bull;</span>
-                      <span className={`${test.visibility === "Public" ? "text-green-600" : "text-orange-500"}`}>
-                        {test.visibility === "Public" ? "🌍 Ommaviy" : "🔒 Shaxsiy"}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Link href={`/test/${test._id}`} className="flex-1 sm:flex-none text-center px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors text-sm">
-                      Ko'rish
-                    </Link>
-                    <button 
-                      onClick={() => handleDeleteTest(test._id)} 
-                      className="flex-1 sm:flex-none px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-sm"
-                    >
-                      O'chirish
-                    </button>
-                  </div>
+                  </pre>
                 </div>
-              ))
-            ) : (
-              <div className="bg-white p-10 rounded-[2rem] border border-dashed border-gray-200 text-center">
-                <span className="text-4xl block mb-3">👻</span>
-                <p className="text-gray-500 font-bold">Bu blokda hali testlar yo'q.</p>
-                <p className="text-sm text-gray-400 mt-1">Chap tomondagi formadan foydalanib test yarating.</p>
+
+                <textarea 
+                  rows="8" 
+                  value={rawQuestions}
+                  onChange={(e) => setRawQuestions(e.target.value)}
+                  placeholder="Bu yerga TXT yoki JSON formatda savollarni tashlang..." 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-gray-800 outline-none transition-all resize-y custom-scrollbar"
+                ></textarea>
               </div>
-            )}
+
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="w-full sm:w-1/3 bg-gray-100 text-gray-700 font-bold py-4 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full sm:w-2/3 bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Yaratilmoqda..." : "Saqlash va Yaratish"}
+            </button>
+              </div>
+            </form>
           </div>
         </div>
+      )}
 
-      </div>
     </div>
   );
 }
