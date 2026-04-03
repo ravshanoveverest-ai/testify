@@ -15,26 +15,35 @@ export default function TeacherDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const res = await fetch("/api/teacher/exams");
+      // NEXT.JS KESHINI CHETLAB O'TISH: ?t=... va cache: 'no-store' qo'shildi!
+      const res = await fetch("/api/teacher/exams?t=" + new Date().getTime(), {
+        cache: "no-store",
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
       const data = await res.json();
       
       if (res.ok) {
-        const allExams = data.exams;
+        const allExams = data.exams || [];
         setExams(allExams);
 
-        // MANTIQ: Faol imtihonlar va O'quvchilar sonini hisoblaymiz
         const now = new Date();
         let activeCount = 0;
         let studentsCount = 0;
 
         allExams.forEach(exam => {
-          // Agar tugash vaqti hali kelmagan bo'lsa -> Faol
-          if (new Date(exam.endTime) > now) {
+          // Tugash vaqti kelajakda bo'lsa -> Faol
+          if (exam.endTime && new Date(exam.endTime) > now) {
             activeCount++;
           }
-          // Topshirgan (completed) o'quvchilar sonini qo'shamiz
-          const completed = exam.passcodes.filter(p => p.status === "completed").length;
-          studentsCount += completed;
+          // Topshirgan (completed) o'quvchilar soni
+          if (exam.passcodes && Array.isArray(exam.passcodes)) {
+            const completed = exam.passcodes.filter(p => p.status === "completed").length;
+            studentsCount += completed;
+          }
         });
 
         setStats({ active: activeCount, students: studentsCount });
@@ -63,20 +72,20 @@ export default function TeacherDashboard() {
         
         {/* DINAMIK STATISTIKA */}
         <div className="flex gap-4 w-full md:w-auto relative z-10">
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex-1 text-center">
-            <p className="text-3xl font-black">{isLoading ? "..." : stats.active}</p>
-            <p className="text-xs font-bold text-purple-200 uppercase mt-1">Faol imtihonlar</p>
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex-1 text-center min-w-[120px]">
+            <p className="text-4xl font-black">{isLoading ? "..." : stats.active}</p>
+            <p className="text-[10px] font-bold text-purple-200 uppercase mt-2 tracking-wider">Faol imtihonlar</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex-1 text-center">
-            <p className="text-3xl font-black">{isLoading ? "..." : stats.students}</p>
-            <p className="text-xs font-bold text-purple-200 uppercase mt-1">O'quvchilar</p>
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex-1 text-center min-w-[120px]">
+            <p className="text-4xl font-black">{isLoading ? "..." : stats.students}</p>
+            <p className="text-[10px] font-bold text-purple-200 uppercase mt-2 tracking-wider">O'quvchilar</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* 2. TEZKOR HARAKATLAR (QUICK ACTIONS) */}
+        {/* 2. TEZKOR HARAKATLAR */}
         <div className="lg:col-span-1 space-y-4">
           <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2"><span>⚡</span> Tezkor harakatlar</h2>
           
@@ -105,7 +114,7 @@ export default function TeacherDashboard() {
           </Link>
         </div>
 
-        {/* 3. OXIRGI IMTIHONLAR (RECENT EXAMS) */}
+        {/* 3. OXIRGI IMTIHONLAR */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-black text-gray-900 flex items-center gap-2"><span>🕒</span> Oxirgi imtihonlar</h2>
@@ -114,32 +123,39 @@ export default function TeacherDashboard() {
 
           <div className="space-y-4">
             {isLoading ? (
-              <div className="text-center py-10 font-bold text-gray-400">Yuklanmoqda...</div>
+              <div className="bg-white p-10 rounded-2xl border border-gray-100 text-center shadow-sm">
+                <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
+                <p className="font-bold text-gray-400">Yuklanmoqda...</p>
+              </div>
             ) : exams.length === 0 ? (
               <div className="bg-white p-10 rounded-2xl border border-gray-100 text-center shadow-sm">
                 <span className="text-4xl mb-3 block">📭</span>
                 <p className="font-bold text-gray-500">Hali hech qanday imtihon yaratilmagan.</p>
               </div>
             ) : (
-              // Eng oxirgi 3 ta imtihonni kesib olib chiqaramiz
               exams.slice(0, 3).map((exam) => {
-                const completedCount = exam.passcodes.filter(p => p.status === "completed").length;
+                const completedCount = exam.passcodes ? exam.passcodes.filter(p => p.status === "completed").length : 0;
+                const isWritten = exam.examType === "written";
                 
                 return (
                   <div key={exam._id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-shadow">
                     <div>
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-black uppercase rounded">
                           {new Date(exam.createdAt).toLocaleDateString('uz-UZ')}
                         </span>
-                        {/* Faol yoki yopiqligini ko'rsatish */}
+                        
+                        <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded ${isWritten ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600'}`}>
+                          {isWritten ? 'Yozma' : 'Test'}
+                        </span>
+
                         {new Date(exam.endTime) > new Date() ? (
                           <span className="px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-black uppercase rounded animate-pulse">Faol</span>
                         ) : (
                           <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-black uppercase rounded">Yopiq</span>
                         )}
                       </div>
-                      <h3 className="font-black text-gray-900 text-lg">{exam.title}</h3>
+                      <h3 className="font-black text-gray-900 text-lg line-clamp-1">{exam.title}</h3>
                     </div>
 
                     <div className="flex items-center gap-6">

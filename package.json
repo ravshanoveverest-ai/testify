@@ -9,11 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^1.48.0",
     "bcryptjs": "^3.0.3",
+    "mammoth": "^1.12.0",
     "mongoose": "^9.3.3",
     "next": "16.2.1",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.13",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },

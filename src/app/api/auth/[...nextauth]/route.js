@@ -14,40 +14,34 @@ export const authOptions = {
         try {
           await connectMongoDB();
           const user = await User.findOne({ email });
-          if (!user) return null; // Bunday email topilmadi
-
-          // Parollarni solishtiramiz
+          if (!user) return null;
           const passwordsMatch = await bcrypt.compare(password, user.password);
-          if (!passwordsMatch) return null; // Parol xato
-
-          // MUHIM: id ni string (matn) holatida qaytaramiz
-          return { id: user._id.toString(), name: user.name, email: user.email };
+          if (!passwordsMatch) return null;
+          return user; // user obyekti qaytadi
         } catch (error) {
           console.log("Xato: ", error);
-          return null;
         }
       },
     }),
   ],
-  
-  // MANA SHU QISM YETISHMAYOTGAN EDI 👇
   callbacks: {
-    // 1. JWT tokenga ID ni joylaymiz
+    // Tokenga rolni qo'shamiz
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.role = user.role;
+        token.id = user._id;
       }
       return token;
     },
-    // 2. O'sha tokendagi ID ni Sessiyaga (session.user.id) o'tkazamiz
+    // Sessiyaga rolni qo'shamiz
     async session({ session, token }) {
-      if (token) {
+      if (session?.user) {
+        session.user.role = token.role;
         session.user.id = token.id;
       }
       return session;
-    },
+    }
   },
-  
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   pages: { signIn: "/login" },

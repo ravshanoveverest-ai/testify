@@ -1,13 +1,13 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
-const userSchema = new Schema(
+const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    // OTP uchun yangi maydonlar 👇
-    resetOtp: { type: String, default: null },
-    resetOtpExpiry: { type: Date, default: null },
+    role: { type: String, enum: ["student", "teacher"], default: "student" }, // YANGI: ROL
+    resetToken: { type: String },
+    resetTokenExpiry: { type: Date },
   },
   { timestamps: true }
 );
