@@ -92,75 +92,98 @@ export default function TeacherRooms() {
     }
   };
 
+  const formatNum = (num) => {
+    if (!num && num !== 0) return 0;
+    const n = Number(num);
+    return Number.isInteger(n) ? n : Number(n).toFixed(1);
+  };
 
   if (isLoading) return <div className="text-center mt-20 font-bold">Yuklanmoqda...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 mt-4 animate-pop">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/teacher" className="w-10 h-10 bg-white rounded-full flex items-center justify-center font-bold text-gray-500 shadow-sm">&larr;</Link>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 flex items-center gap-2"><span>🔑</span> Xonalar va Natijalar</h1>
-          </div>
-        </div>
-        <Link href="/teacher/create-ai" className="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg text-sm">+ Yangi yaratish</Link>
-      </div>
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: 0.3s ease forwards fadeIn; }
+      `}} />
 
-      {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 font-bold">⚠️ {error}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {exams.map((exam) => {
-          const completedCount = exam.passcodes.filter(p => p.status === "completed").length;
-
-          return (
-            <div key={exam._id} className="bg-white rounded-[2rem] p-6 sm:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${exam.startTime ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
-                    {safeFormatDate(exam.startTime)}
-                  </div>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-md ${exam.examType === 'written' ? 'bg-orange-50 text-orange-600' : 'bg-purple-50 text-purple-600'}`}>
-                    {exam.examType === 'written' ? 'Yozma' : 'Test'}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-black text-gray-900 mb-1">{exam.title}</h3>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <p className="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                    ⏱️ {safeFormatTime(exam.startTime)} - {safeFormatTime(exam.endTime)}
-                  </p>
-                  <button onClick={() => openEditModal(exam)} className="p-1.5 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 transition-colors" title="Vaqtni o'zgartirish">✏️</button>
-                </div>
-                
-                <div className="flex gap-4 mt-4">
-                  <div className="bg-gray-50 p-3 rounded-xl flex-1 text-center">
-                    <p className="text-xl font-black text-gray-800">{exam.questionsPerStudent}</p>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">Savol</p>
-                  </div>
-                  <div className="bg-green-50 p-3 rounded-xl flex-1 text-center border border-green-100">
-                    <p className="text-xl font-black text-green-600">{completedCount} / {exam.passcodes.length}</p>
-                    <p className="text-[10px] text-green-600 font-bold uppercase">Topshirdi</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 mt-6">
-                <button onClick={() => setSelectedExamPasscodes(exam)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-all shadow-sm text-sm">
-                  🔑 Parollarni ko'rish
-                </button>
-                <button onClick={() => setSelectedExamResults(exam)} className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">
-                  📊 Natijalarni ko'rish
-                </button>
-              </div>
+      {/* ASOSIY SAHIFA QISMI */}
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 mt-4 animate-pop relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <Link href="/teacher" className="w-10 h-10 bg-white rounded-full flex items-center justify-center font-bold text-gray-500 shadow-sm">&larr;</Link>
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 flex items-center gap-2"><span>🔑</span> Xonalar va Natijalar</h1>
             </div>
-          )
-        })}
+          </div>
+          <Link href="/teacher/create-ai" className="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg text-sm">+ Yangi yaratish</Link>
+        </div>
+
+        {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 font-bold">⚠️ {error}</div>}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {exams.map((exam) => {
+            const completedCount = exam.passcodes.filter(p => p.status === "completed").length;
+            const isActive = new Date(exam.endTime) > new Date();
+
+            return (
+              <div key={exam._id} className="bg-white rounded-[2rem] p-6 sm:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase ${exam.startTime ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
+                        {safeFormatDate(exam.startTime)}
+                      </div>
+                      <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-md tracking-wider ${isActive ? 'bg-green-100 text-green-600 animate-pulse' : 'bg-red-100 text-red-600'}`}>
+                        {isActive ? "Faol" : "Yopiq"}
+                      </span>
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-md ${exam.examType === 'written' ? 'bg-orange-50 text-orange-600' : 'bg-purple-50 text-purple-600'}`}>
+                      {exam.examType === 'written' ? 'Yozma' : 'Test'}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-xl font-black text-gray-900 mb-1">{exam.title}</h3>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <p className="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                      ⏱️ {safeFormatTime(exam.startTime)} - {safeFormatTime(exam.endTime)}
+                    </p>
+                    <button onClick={() => openEditModal(exam)} className="p-1.5 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 transition-colors" title="Vaqtni o'zgartirish">✏️</button>
+                  </div>
+                  
+                  <div className="flex gap-4 mt-4">
+                    <div className="bg-gray-50 p-3 rounded-xl flex-1 text-center">
+                      <p className="text-xl font-black text-gray-800">{exam.questionsPerStudent}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">Savol</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-xl flex-1 text-center border border-green-100">
+                      <p className="text-xl font-black text-green-600">{completedCount} / {exam.passcodes.length}</p>
+                      <p className="text-[10px] text-green-600 font-bold uppercase">Topshirdi</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 mt-6">
+                  <button onClick={() => setSelectedExamPasscodes(exam)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-all shadow-sm text-sm">
+                    🔑 Parollarni ko'rish
+                  </button>
+                  <button onClick={() => setSelectedExamResults(exam)} className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">
+                    📊 Natijalarni ko'rish
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* MODALLAR QISMI (ASOSIY DIVDAN TASHQARIGA CHIQARILDI) */}
+      {/* ======================================================== */}
 
       {editingExam && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-pop">
             <button onClick={() => setEditingExam(null)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full font-bold hover:bg-gray-200">✕</button>
             <h2 className="text-xl font-black mb-1 flex items-center gap-2"><span>✏️</span> Muddatni o'zgartirish</h2>
@@ -178,11 +201,11 @@ export default function TeacherRooms() {
       )}
 
       {selectedExamPasscodes && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] p-6 max-w-lg w-full shadow-2xl relative max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-start justify-center p-4 pt-24 sm:pt-28 pb-10 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[2rem] p-6 max-w-lg w-full shadow-2xl relative max-h-[calc(100vh-10rem)] flex flex-col animate-pop">
             <button onClick={() => setSelectedExamPasscodes(null)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full font-bold">✕</button>
-            <h2 className="text-xl font-black mb-4">🔑 Parollar ro'yxati</h2>
-            <div className="overflow-y-auto custom-scrollbar flex-1 space-y-2 mb-4">
+            <h2 className="text-xl font-black mb-4 shrink-0">🔑 Parollar ro'yxati</h2>
+            <div className="overflow-y-auto custom-scrollbar flex-1 space-y-2 mb-2 pr-2">
               {selectedExamPasscodes.passcodes.map((pass, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border rounded-xl">
                   <div>
@@ -199,23 +222,22 @@ export default function TeacherRooms() {
         </div>
       )}
 
-      {/* TAYYOR, MANA SHU MODAL TO'G'RILANDI! */}
       {selectedExamResults && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-start justify-center p-4 pt-24 sm:pt-28 pb-10 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[calc(100vh-10rem)] flex flex-col animate-pop">
             <button onClick={() => setSelectedExamResults(null)} className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full font-bold">✕</button>
-            <h2 className="text-2xl font-black mb-1">📊 Imtihon Natijalari</h2>
-            <p className="text-gray-500 font-medium text-sm mb-6">{selectedExamResults.title}</p>
             
-            <div className="overflow-y-auto custom-scrollbar flex-1">
+            <div className="mb-6 pr-10 shrink-0">
+              <h2 className="text-2xl font-black mb-1">📊 Imtihon Natijalari</h2>
+              <p className="text-gray-500 font-medium text-sm">{selectedExamResults.title}</p>
+            </div>
+            
+            <div className="overflow-y-auto custom-scrollbar flex-1 pr-2">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="p-4 font-bold text-sm text-gray-500 rounded-l-xl">O'quvchi (Parol)</th>
-                    
-                    {/* MANA SHU YER O'ZGARDI: To'g'ri o'rniga To'plangan Ball */}
                     <th className="p-4 font-bold text-sm text-gray-500 text-center">To'plangan Ball</th>
-                    
                     <th className="p-4 font-bold text-sm text-gray-500 text-center rounded-r-xl">Foiz</th>
                   </tr>
                 </thead>
@@ -225,7 +247,6 @@ export default function TeacherRooms() {
                     .sort((a, b) => b.score - a.score) 
                     .map((pass, index) => {
                       
-                      // MATEMATIKA O'ZGARDI: Ball / Maksimal Ball * 100
                       const maxScore = selectedExamResults.maxScore || 100;
                       const percentage = Math.round((pass.score / maxScore) * 100);
                       
@@ -236,9 +257,8 @@ export default function TeacherRooms() {
                             <p className="text-xs text-gray-400 font-bold font-mono mt-0.5">{pass.code}</p>
                           </td>
                           
-                          {/* Jami ball to'g'ri ko'rsatiladi */}
                           <td className="p-4 text-center font-black text-gray-800">
-                            {pass.score} / {maxScore}
+                            {formatNum(pass.score)} / {maxScore}
                           </td>
                           
                           <td className="p-4 text-center">
@@ -260,6 +280,6 @@ export default function TeacherRooms() {
         </div>
       )}
 
-    </div>
+    </>
   );
 }

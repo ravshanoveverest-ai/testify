@@ -126,7 +126,7 @@ export default function ExamRoom() {
           <p className="text-gray-500 font-medium mb-8">Natijangiz tizimga saqlandi</p>
           
           <div className={`${bg} rounded-3xl p-8 mb-8 border border-gray-100/50`}>
-             <p className={`text-6xl font-black ${color} mb-2`}>{result.score} <span className="text-2xl text-gray-400">/ {result.maxScore}</span></p>
+             <p className={`text-6xl font-black ${color} mb-2`}>{Number.isInteger(Number(result.score)) ? result.score : Number(result.score).toFixed(1)} <span className="text-2xl text-gray-400">/ {result.maxScore}</span></p>
              <p className="text-gray-600 font-bold uppercase tracking-wider text-xs">Jami Ball ({percentage}%)</p>
           </div>
 
@@ -178,7 +178,6 @@ export default function ExamRoom() {
                 {q.text}
               </h3>
               
-              {/* SHU YERDA AJRALADI: Yozma ish uchun Input, Test uchun knopkalar */}
               <div className="pl-0 sm:pl-11">
                 {isWritten ? (
                   <textarea 
@@ -218,6 +217,14 @@ export default function ExamRoom() {
   // 3. LOGIN EKRANI
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* YANGIQ QO'SHILGAN: Bosh sahifaga qaytish tugmasi */}
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-20">
+        <Link href="/" className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-black text-gray-500 shadow-md border border-gray-100 hover:text-purple-600 hover:shadow-lg hover:scale-105 transition-all active:scale-95">
+          &larr;
+        </Link>
+      </div>
+
       <div className="bg-white/80 backdrop-blur-xl p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border border-white max-w-md w-full animate-pop z-10">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 text-white rounded-[1.5rem] flex items-center justify-center text-4xl mx-auto mb-6 rotate-3">🎯</div>

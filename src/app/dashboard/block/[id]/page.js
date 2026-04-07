@@ -596,7 +596,6 @@ export default function BlockDetails() {
                 <div key={test._id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group flex flex-col justify-between h-full">
                   <div className="mb-4">
                     <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">{test.title}</h3>
-                    {/* NOL MASHMASHASI MANA SHU YERDA TO'G'IRLANDI 👇 */}
                     <p className="text-sm text-gray-500 font-medium">
                       {test.questions?.length || test.questionCount || 0} ta savol • Barchaga ochiq
                     </p>
@@ -683,9 +682,14 @@ export default function BlockDetails() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Savollar matni (TXT yoki JSON)</label>
+                
+                {/* MANA SHU YERDA PLACEHOLDER QO'SHILDI VA CLASSDAGI TEXT RANGI O'ZGARDI */}
                 <textarea 
-                  rows="10" value={rawQuestions} onChange={(e) => setRawQuestions(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-gray-800 outline-none transition-all resize-y custom-scrollbar"
+                  rows="10" 
+                  value={rawQuestions} 
+                  onChange={(e) => setRawQuestions(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-gray-800 outline-none transition-all resize-y custom-scrollbar placeholder:text-gray-400/80"
+                  placeholder={`[JSON Formati]:\n[\n  {\n    "question": "O'zbekiston poytaxti?",\n    "options": ["Toshkent", "Samarqand"],\n    "answer": "Toshkent"\n  }\n]\n\nYOKI [TXT Formati]:\n1. O'zbekiston poytaxti?\nA) Toshkent\nB) Samarqand\nJavob: Toshkent`}
                 ></textarea>
               </div>
 
