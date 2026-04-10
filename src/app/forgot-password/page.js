@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -21,9 +21,33 @@ export default function ForgotPassword() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // 1. EMAILGA KOD SO'RASH
+  // ========================================================
+  // TAYMER UCHUN STATELAR
+  // ========================================================
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (step === 2 && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [step, timeLeft]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  // 1. EMAILGA KOD SO'RASH (Yoki qayta yuborish)
   const handleSendOtp = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setErrorMsg("");
     setIsLoading(true);
 
@@ -38,6 +62,8 @@ export default function ForgotPassword() {
       if (res.ok) {
         setSuccessMsg("Kod emailingizga yuborildi! (Spamni ham tekshiring)");
         setStep(2); // OTP kiritish bosqichiga o'tish
+        setTimeLeft(60); // Taymerni 1 daqiqadan boshlash
+        setCanResend(false); 
       } else {
         setErrorMsg(data.message);
       }
@@ -49,16 +75,34 @@ export default function ForgotPassword() {
   };
 
   // 2. OTP NI TASDIQLASH VA PAROL MODALINI OCHISH
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setErrorMsg("");
     
     if (otp.length !== 6) {
       return setErrorMsg("OTP kod 6 xonali bo'lishi kerak!");
     }
-    
-    // API ga jo'natmasdan oldin parollarni yozish oynasini ochamiz
-    setStep(3); 
+
+    setIsLoading(true);
+    try {
+      // 2-API: OTP ni tekshiramiz
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setStep(3); // Kod to'g'ri bo'lsa, Parol yaratish modalini ochamiz
+      } else {
+        setErrorMsg(data.message || "OTP kod xato kiritildi!");
+      }
+    } catch (err) {
+      setErrorMsg("Server xatosi");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 3. PAROLNI YANGILASH (API GA SO'ROV)
@@ -77,6 +121,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
+      // 3-API: Yangi parolni saqlash
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,10 +133,6 @@ export default function ForgotPassword() {
         setStep(4); // Muvaffaqiyatli Modalni ochish
       } else {
         setErrorMsg(data.message);
-        // Agar OTP xato bo'lsa, qayta OTP yozishga qaytaramiz
-        if (data.message.includes("OTP")) {
-          setStep(2); 
-        }
       }
     } catch (err) {
       setErrorMsg("Server xatosi");
@@ -146,11 +187,18 @@ export default function ForgotPassword() {
           </form>
         )}
 
-        {/* 2-BOSQICH (Faqat OTP kiritish) */}
+        {/* 2-BOSQICH (Faqat OTP kiritish va API ga tekshirishga yuborish) */}
         {(step === 2 || step === 3) && (
           <form onSubmit={handleVerifyOtp} className="space-y-6 animate-pop">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Emailga kelgan 6 xonali kod (OTP)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-bold text-gray-700">Emailga kelgan kod (OTP)</label>
+                {step === 2 && (
+                  <span className={`text-xs font-black px-2 py-1 rounded-lg ${timeLeft > 0 ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"}`}>
+                    ⏱ {formatTime(timeLeft)}
+                  </span>
+                )}
+              </div>
               <input 
                 type="text" 
                 required 
@@ -160,12 +208,28 @@ export default function ForgotPassword() {
                 className="w-full px-5 py-4 rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 font-black text-center text-2xl tracking-[0.5em]" 
                 placeholder="------" 
               />
+              
+              {/* Qayta yuborish tugmasi */}
+              {step === 2 && (
+                <div className="text-right mt-2">
+                  <button 
+                    type="button" 
+                    onClick={handleSendOtp} 
+                    disabled={!canResend || isLoading} 
+                    className={`text-xs font-bold transition-colors ${canResend ? "text-blue-600 hover:text-blue-800 hover:underline" : "text-gray-400 cursor-not-allowed"}`}
+                  >
+                    Kodni qayta yuborish
+                  </button>
+                </div>
+              )}
             </div>
+            
             <button 
               type="submit" 
-              className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg text-lg active:scale-95"
+              disabled={isLoading}
+              className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg text-lg active:scale-95 disabled:opacity-50"
             >
-              Tasdiqlash
+              {isLoading ? "Tekshirilmoqda..." : "Tasdiqlash"}
             </button>
             <button type="button" onClick={() => setStep(1)} className="w-full text-center text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors mt-2">
               ← Emailni o'zgartirish

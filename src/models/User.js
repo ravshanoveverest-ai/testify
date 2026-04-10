@@ -5,9 +5,15 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["student", "teacher"], default: "student" }, // YANGI: ROL
-    resetToken: { type: String },
-    resetTokenExpiry: { type: Date },
+    role: { type: String, enum: ["student", "teacher"], default: "student" }, // ROL
+    
+    // Eski token mantiqlari (xalaqit bermasligi uchun qoldiramiz)
+    resetToken: { type: String, default: null },
+    resetTokenExpiry: { type: Date, default: null },
+    
+    // YANGI QO'SHILGAN: OTP uchun maydonlar
+    resetOtp: { type: String, default: null },
+    resetOtpExpiry: { type: Date, default: null },
   },
   { timestamps: true }
 );
