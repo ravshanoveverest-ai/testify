@@ -8,6 +8,8 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Testify - Test Yaratish Platformasi",
   description: "O'z testlaringizni oson yarating va ishlashga bering",
+  manifest: "/manifest.json", // <-- MANA SHU QATOR MUHIM! PWABuilder shuni qidiryapti
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({ children }) {
