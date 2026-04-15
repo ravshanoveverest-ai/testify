@@ -273,7 +273,7 @@ export default function Dashboard() {
     }
 
     if (editBlockName.trim() === editingBlock.name) {
-      setEditingBlock(null); // Hech nima o'zgarmasa, yopib yuboramiz
+      setEditingBlock(null);
       return;
     }
 
@@ -344,11 +344,12 @@ export default function Dashboard() {
   return (
     <>
       {successToast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-green-50 border border-green-100 text-green-700 px-6 py-3 rounded-full font-black text-sm shadow-xl animate-pop flex items-center gap-2">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] bg-green-50 border border-green-100 text-green-700 px-6 py-3 rounded-full font-black text-sm shadow-xl animate-pop flex items-center gap-2">
           <i className="fi fi-rr-check-circle text-lg translate-y-[1px]"></i> {successToast}
         </div>
       )}
 
+      {/* ASOSIY SAHIFA KONTENTI */}
       <div className="max-w-6xl mx-auto p-4 sm:p-8 mt-4 animate-pop">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
@@ -415,149 +416,147 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* ================================================= */}
-        {/* BLOK YARATISH MODALI */}
-        {/* ================================================= */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
-            <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-pop relative">
-              <button onClick={() => setIsCreateModalOpen(false)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors">
-                <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
-              </button>
+      {/* ================================================= */}
+      {/* MODALLAR QISMI (ASOSIY DIVDAN TASHQARIGA CHIQARILDI) */}
+      {/* Shunda qora xira fon (blur) butun ekranni yopadi! */}
+      {/* ================================================= */}
 
-              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <i className="fi fi-rr-layer-plus text-green-600"></i> Yangi blok
-              </h2>
-              
-              {createErrorMsg && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold border border-red-100 flex items-center gap-2 animate-pop">
-                  <i className="fi fi-rr-exclamation"></i> {createErrorMsg}
-                </div>
-              )}
+      {/* 1. BLOK YARATISH MODALI */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
+          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-pop relative">
+            <button onClick={() => setIsCreateModalOpen(false)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors">
+              <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
+            </button>
 
-              <form onSubmit={handleCreateBlock} className="space-y-5">
-                <div className="hidden">
-                  <input type="text" value={blockIcon} readOnly />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <i className="fi fi-rr-text"></i> Blok nomi
-                  </label>
-                  <input 
-                    type="text" 
-                    value={blockName} 
-                    onChange={(e) => setBlockName(e.target.value)} 
-                    placeholder="Masalan: Tarix 1-kurs" 
-                    className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 font-medium text-gray-900" 
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                    Bekor qilish
-                  </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isSubmitting ? (
-                      <><i className="fi fi-rr-spinner animate-spin"></i> Yaratilmoqda...</>
-                    ) : (
-                      <><i className="fi fi-rr-check"></i> Yaratish</>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================= */}
-        {/* BLOKNI TAHRIRLASH MODALI */}
-        {/* ================================================= */}
-        {editingBlock && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
-            <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-pop relative">
-              <button onClick={() => setEditingBlock(null)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors">
-                <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
-              </button>
-
-              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <i className="fi fi-rr-edit text-blue-600"></i> Blokni Tahrirlash
-              </h2>
-              
-              {editErrorMsg && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold border border-red-100 flex items-center gap-2 animate-pop">
-                  <i className="fi fi-rr-exclamation"></i> {editErrorMsg}
-                </div>
-              )}
-
-              <form onSubmit={handleEditBlock} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <i className="fi fi-rr-text"></i> Yangi blok nomi
-                  </label>
-                  <input 
-                    type="text" 
-                    value={editBlockName} 
-                    onChange={(e) => setEditBlockName(e.target.value)} 
-                    className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 font-medium text-gray-900" 
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setEditingBlock(null)} className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                    Bekor qilish
-                  </button>
-                  <button type="submit" disabled={isEditing} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
-                    {isEditing ? (
-                      <><i className="fi fi-rr-spinner animate-spin"></i> Saqlanmoqda...</>
-                    ) : (
-                      <><i className="fi fi-rr-disk"></i> Saqlash</>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================= */}
-        {/* O'CHIRISHNI TASDIQLASH MODALI */}
-        {/* ================================================= */}
-        {deletingBlock && (
-          <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
-            <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-pop text-center">
-              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 border-4 border-red-100">
-                <i className="fi fi-rr-trash"></i>
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+              <i className="fi fi-rr-layer-plus text-green-600"></i> Yangi blok
+            </h2>
+            
+            {createErrorMsg && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold border border-red-100 flex items-center gap-2 animate-pop">
+                <i className="fi fi-rr-exclamation"></i> {createErrorMsg}
               </div>
-              <h2 className="text-2xl font-black mb-2 text-gray-900">Blokni o'chirasizmi?</h2>
-              <p className="text-sm font-medium text-gray-500 mb-8 px-2">
-                Siz haqiqatan ham <b className="text-gray-800">"{deletingBlock.name}"</b> blokini o'chirmoqchimisiz? Bu jarayonni ortga qaytarib bo'lmaydi va uning ichidagi barcha testlar o'chib ketishi mumkin.
-              </p>
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setDeletingBlock(null)} 
-                  className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all"
-                >
+            )}
+
+            <form onSubmit={handleCreateBlock} className="space-y-5">
+              <div className="hidden">
+                <input type="text" value={blockIcon} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <i className="fi fi-rr-text"></i> Blok nomi
+                </label>
+                <input 
+                  type="text" 
+                  value={blockName} 
+                  onChange={(e) => setBlockName(e.target.value)} 
+                  placeholder="Masalan: Tarix 1-kurs" 
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 font-medium text-gray-900" 
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
                   Bekor qilish
                 </button>
-                <button 
-                  onClick={handleDeleteBlock} 
-                  disabled={isDeleting} 
-                  className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-200 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {isDeleting ? (
-                    <><i className="fi fi-rr-spinner animate-spin"></i> O'chirilmoqda...</>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isSubmitting ? (
+                    <><i className="fi fi-rr-spinner animate-spin"></i> Yaratilmoqda...</>
                   ) : (
-                    <><i className="fi fi-rr-trash"></i> Ha, o'chirish</>
+                    <><i className="fi fi-rr-check"></i> Yaratish</>
                   )}
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. BLOKNI TAHRIRLASH MODALI */}
+      {editingBlock && (
+        <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
+          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-pop relative">
+            <button onClick={() => setEditingBlock(null)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors">
+              <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
+            </button>
+
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+              <i className="fi fi-rr-edit text-blue-600"></i> Blokni Tahrirlash
+            </h2>
+            
+            {editErrorMsg && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold border border-red-100 flex items-center gap-2 animate-pop">
+                <i className="fi fi-rr-exclamation"></i> {editErrorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleEditBlock} className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <i className="fi fi-rr-text"></i> Yangi blok nomi
+                </label>
+                <input 
+                  type="text" 
+                  value={editBlockName} 
+                  onChange={(e) => setEditBlockName(e.target.value)} 
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 font-medium text-gray-900" 
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setEditingBlock(null)} className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                  Bekor qilish
+                </button>
+                <button type="submit" disabled={isEditing} className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isEditing ? (
+                    <><i className="fi fi-rr-spinner animate-spin"></i> Saqlanmoqda...</>
+                  ) : (
+                    <><i className="fi fi-rr-disk"></i> Saqlash</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. O'CHIRISHNI TASDIQLASH MODALI */}
+      {deletingBlock && (
+        <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
+          <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-pop text-center">
+            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 border-4 border-red-100">
+              <i className="fi fi-rr-trash"></i>
+            </div>
+            <h2 className="text-2xl font-black mb-2 text-gray-900">Blokni o'chirasizmi?</h2>
+            <p className="text-sm font-medium text-gray-500 mb-8 px-2">
+              Siz haqiqatan ham <b className="text-gray-800">"{deletingBlock.name}"</b> blokini o'chirmoqchimisiz? Bu jarayonni ortga qaytarib bo'lmaydi va uning ichidagi barcha testlar o'chib ketishi mumkin.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeletingBlock(null)} 
+                className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all"
+              >
+                Bekor qilish
+              </button>
+              <button 
+                onClick={handleDeleteBlock} 
+                disabled={isDeleting} 
+                className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-200 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <><i className="fi fi-rr-spinner animate-spin"></i> O'chirilmoqda...</>
+                ) : (
+                  <><i className="fi fi-rr-trash"></i> Ha, o'chirish</>
+                )}
+              </button>
             </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </>
   );
 }
