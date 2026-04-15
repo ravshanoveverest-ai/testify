@@ -53,3 +53,33 @@ export async function PUT(request) {
     return NextResponse.json({ message: "Server xatosi yuz berdi." }, { status: 500 });
   }
 }
+
+// YANGI: Imtihonni o'chirish (DELETE)
+export async function DELETE(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "teacher") {
+      return NextResponse.json({ message: "Ruxsat etilmagan!" }, { status: 401 });
+    }
+
+    const { examId } = await request.json();
+
+    if (!examId) {
+      return NextResponse.json({ message: "Imtihon ID si topilmadi!" }, { status: 400 });
+    }
+
+    await connectMongoDB();
+    
+    // Imtihonni bazadan to'liq o'chirib tashlaymiz
+    const deletedExam = await Exam.findByIdAndDelete(examId);
+
+    if (!deletedExam) {
+      return NextResponse.json({ message: "Imtihon bazadan topilmadi! ID xato." }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Imtihon muvaffaqiyatli o'chirildi!" }, { status: 200 });
+  } catch (error) {
+    console.log("DELETE EXAM XATOSI: ", error);
+    return NextResponse.json({ message: "Server xatosi yuz berdi." }, { status: 500 });
+  }
+}

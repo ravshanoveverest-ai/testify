@@ -1069,7 +1069,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -1187,13 +1186,11 @@ export default function TakeTest() {
     }
   };
 
-  // VARIANTLAR UCHUN JAVOB TANLASH
   const handleSelectOption = (option) => {
     if (lockedQuestions[currentQuestionIndex]) return; 
     setSelectedAnswers({ ...selectedAnswers, [currentQuestionIndex]: option });
   };
 
-  // YOZMA ISH UCHUN JAVOB KIRITISH (YANGI QO'SHILDI)
   const handleInputAnswer = (text) => {
     if (lockedQuestions[currentQuestionIndex]) return;
     setSelectedAnswers({ ...selectedAnswers, [currentQuestionIndex]: text });
@@ -1230,7 +1227,7 @@ export default function TakeTest() {
     setShowFinishModal(false); 
     
     let correctCount = 0;
-    let answeredCount = 0; // Yozma ish uchun to'ldirilganlarni sanaymiz
+    let answeredCount = 0; 
     
     activeQuestions.forEach((q, index) => {
       const userAns = (selectedAnswers[index] || "").toLowerCase().trim();
@@ -1241,7 +1238,7 @@ export default function TakeTest() {
     });
 
     const total = activeQuestions.length;
-    const unanswered = total - answeredCount; // O'zgartirildi
+    const unanswered = total - answeredCount; 
     const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
 
     setResultData({
@@ -1280,7 +1277,7 @@ export default function TakeTest() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <div className="w-14 h-14 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <i className="fi fi-rr-spinner animate-spin text-4xl text-blue-600 mb-4"></i>
         <p className="font-bold text-gray-400 text-lg">Test tayyorlanmoqda...</p>
       </div>
     );
@@ -1289,11 +1286,13 @@ export default function TakeTest() {
   if (error || !test) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6">
-        <div className="text-7xl mb-6">🚫</div>
+        <div className="text-7xl mb-6 text-red-500"><i className="fi fi-rr-ban"></i></div>
         <h1 className="text-3xl font-black text-red-600 mb-2">{error || "Test topilmadi"}</h1>
         <p className="text-gray-500 mb-8 max-w-md">Iltimos, bosh sahifaga qaytib boshqa testlarni ko'ring.</p>
         <Link href="/">
-          <button className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95">Bosh sahifaga qaytish</button>
+          <button className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 mx-auto">
+            <i className="fi fi-rr-home"></i> Bosh sahifaga qaytish
+          </button>
         </Link>
       </div>
     );
@@ -1306,45 +1305,63 @@ export default function TakeTest() {
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-600 to-blue-400 opacity-10"></div>
           
           <div className="flex justify-between items-start relative z-10 mb-2">
-            <span className="text-5xl sm:text-6xl">{test.examType === "written" ? "✍️" : "⚙️"}</span>
+            <span className="text-5xl sm:text-6xl text-blue-600">
+              {test.examType === "written" ? <i className="fi fi-rr-edit"></i> : <i className="fi fi-rr-settings"></i>}
+            </span>
             <button 
               onClick={fetchLeaderboard}
               className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-xl font-black text-sm transition-colors flex items-center gap-2 shadow-sm"
             >
-              🏆 Top 10 Reyting
+              <i className="fi fi-rr-trophy"></i> Top 10 Reyting
             </button>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mt-2 mb-2 relative z-10">{test.title}</h1>
-          <p className="text-gray-500 font-medium mb-10 relative z-10">Bazada jami: <span className="font-bold text-blue-600">{test.questions.length} ta savol</span></p>
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mt-4 mb-2 relative z-10">{test.title}</h1>
+          <p className="text-gray-500 font-medium mb-10 relative z-10 flex justify-center items-center gap-2">
+            <i className="fi fi-rr-database text-blue-500"></i> Bazada jami: <span className="font-bold text-blue-600">{test.questions.length} ta savol</span>
+          </p>
 
-          <div className="space-y-6 text-left max-w-sm mx-auto">
+          <div className="space-y-6 text-left max-w-sm mx-auto relative z-10">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Qancha ishlaysiz? (Random)</label>
-              <input 
-                type="number" 
-                min="1" 
-                max={test.questions.length}
-                value={questionCount}
-                onChange={(e) => setQuestionCount(e.target.value)}
-                className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-lg text-gray-800"
-              />
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <i className="fi fi-rr-shuffle text-gray-400"></i> Qancha ishlaysiz? (Random)
+              </label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  min="1" 
+                  max={test.questions.length}
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(e.target.value)}
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-lg text-gray-800"
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Vaqt (Minut, 0 = vaqtsiz)</label>
-              <input 
-                type="number" 
-                min="0"
-                value={timerMinutes}
-                onChange={(e) => setTimerMinutes(e.target.value)}
-                className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-lg text-gray-800"
-              />
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <i className="fi fi-rr-time-fast text-gray-400"></i> Vaqt (Minut, 0 = vaqtsiz)
+              </label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  min="0"
+                  value={timerMinutes}
+                  onChange={(e) => setTimerMinutes(e.target.value)}
+                  className="w-full px-5 py-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-lg text-gray-800"
+                />
+              </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-12 relative z-10">
-            <Link href="/" className="w-full sm:flex-1"><button className="w-full py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Orqaga qaytish</button></Link>
-            <button onClick={handleStartTest} className="w-full sm:flex-1 py-4 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95">Testni Boshlash 🚀</button>
+            <Link href="/" className="w-full sm:flex-1">
+              <button className="w-full py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors flex justify-center items-center gap-2">
+                <i className="fi fi-rr-arrow-left"></i> Orqaga qaytish
+              </button>
+            </Link>
+            <button onClick={handleStartTest} className="w-full sm:flex-1 py-4 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 flex justify-center items-center gap-2">
+              Testni Boshlash <i className="fi fi-rr-play"></i>
+            </button>
           </div>
         </div>
 
@@ -1357,11 +1374,11 @@ export default function TakeTest() {
                 onClick={() => setShowLeaderboard(false)}
                 className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-bold transition-colors"
               >
-                ✕
+                <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
               </button>
 
               <div className="text-center mb-6">
-                <span className="text-5xl block mb-2">🏆</span>
+                <span className="text-5xl block mb-4 text-yellow-500"><i className="fi fi-rr-podium"></i></span>
                 <h3 className="text-2xl font-black text-gray-900">Kuchlilar reytingi</h3>
                 <p className="text-gray-500 font-medium text-sm">Ushbu testdagi eng yaxshi 10 ta natija</p>
               </div>
@@ -1369,7 +1386,7 @@ export default function TakeTest() {
               <div className="overflow-y-auto pr-2 custom-scrollbar flex-1 mb-4">
                 {isLoadingLeaderboard ? (
                   <div className="py-10 text-center text-gray-500 font-bold flex flex-col items-center">
-                    <div className="w-8 h-8 border-4 border-gray-200 border-t-yellow-500 rounded-full animate-spin mb-3"></div>
+                    <i className="fi fi-rr-spinner animate-spin text-3xl text-yellow-500 mb-3"></i>
                     Yuklanmoqda...
                   </div>
                 ) : leaderboardData.length > 0 ? (
@@ -1378,7 +1395,7 @@ export default function TakeTest() {
                       <div key={userResult._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <div className="flex items-center gap-4">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shrink-0
-                            ${index === 0 ? "bg-yellow-100 text-yellow-600" : index === 1 ? "bg-gray-200 text-gray-600" : index === 2 ? "bg-orange-100 text-orange-600" : "bg-blue-50 text-blue-600"}
+                            ${index === 0 ? "bg-yellow-100 text-yellow-600 border border-yellow-200" : index === 1 ? "bg-gray-200 text-gray-600 border border-gray-300" : index === 2 ? "bg-orange-100 text-orange-600 border border-orange-200" : "bg-blue-50 text-blue-600 border border-blue-100"}
                           `}>
                             {index + 1}
                           </div>
@@ -1386,19 +1403,23 @@ export default function TakeTest() {
                             <p className="font-bold text-gray-900 truncate max-w-[120px] sm:max-w-[180px]">
                               {userResult.userId?.name || "Noma'lum qahramon"}
                             </p>
-                            <p className="text-xs text-gray-400 font-medium">⏱️ {formatTime(userResult.timeSpent)} sarfladi</p>
+                            <p className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-0.5">
+                              <i className="fi fi-rr-time-fast"></i> {formatTime(userResult.timeSpent)} sarfladi
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-green-600 text-lg">{userResult.correctAnswers}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">To'g'ri</p>
+                          <p className="font-black text-green-600 text-lg flex items-center justify-end gap-1">
+                            {userResult.correctAnswers} <i className="fi fi-rr-check-circle text-xs translate-y-[1px]"></i>
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">To'g'ri</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="py-10 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <span className="text-4xl block mb-2">📭</span>
+                    <span className="text-4xl block mb-4 text-gray-300"><i className="fi fi-rr-box-open-full"></i></span>
                     <p className="text-gray-500 font-bold">Hali natijalar yo'q!</p>
                     <p className="text-sm text-gray-400">Birinchi bo'lib reytingga kiring.</p>
                   </div>
@@ -1435,10 +1456,12 @@ export default function TakeTest() {
         <div className="flex items-center gap-4">
           {timeLeft !== null && (
             <div className={`px-4 py-2 rounded-xl font-black text-lg sm:text-xl tracking-wider shadow-inner flex items-center gap-2 ${timeLeft < 60 ? "bg-red-100 text-red-600 animate-pulse" : "bg-gray-900 text-white"}`}>
-              ⏱️ {formatTime(timeLeft)}
+              <i className="fi fi-rr-clock-three"></i> {formatTime(timeLeft)}
             </div>
           )}
-          <button onClick={() => setShowExitModal(true)} className="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors" title="Chiqib ketish">✕</button>
+          <button onClick={() => setShowExitModal(true)} className="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors" title="Chiqib ketish">
+            <i className="fi fi-rr-cross-small text-xl translate-y-[1px]"></i>
+          </button>
         </div>
       </div>
 
@@ -1446,7 +1469,9 @@ export default function TakeTest() {
         
         <div className="w-full lg:w-1/3 xl:w-1/4">
           <div className="bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm sticky top-[180px]">
-            <h3 className="font-bold text-gray-800 mb-4 text-center text-sm sm:text-base">Navigatsiya</h3>
+            <h3 className="font-bold text-gray-800 mb-4 text-center text-sm sm:text-base flex items-center justify-center gap-2">
+              <i className="fi fi-rr-apps"></i> Navigatsiya
+            </h3>
             
             <div className="flex flex-wrap gap-2 justify-center mb-2">
               {activeQuestions.map((_, idx) => {
@@ -1479,7 +1504,6 @@ export default function TakeTest() {
               <p className="text-xl sm:text-2xl font-bold text-gray-800 leading-snug pt-1">{currentQuestion.text}</p>
             </div>
             
-            {/* YANGI QISHLANGAN QISM: YOZMA ISH UCHUN YOKI TEST UCHUN */}
             {test.examType === "written" || !currentQuestion.options || currentQuestion.options.length === 0 ? (
               <div className="mt-4">
                 <textarea
@@ -1527,41 +1551,42 @@ export default function TakeTest() {
               <button 
                 onClick={handlePrev}
                 disabled={currentQuestionIndex === 0}
-                className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                &larr; Oldingi
+                <i className="fi fi-rr-arrow-left"></i> Oldingi
               </button>
               
               <button 
                 onClick={handleNext}
                 disabled={currentQuestionIndex === activeQuestions.length - 1}
-                className="px-6 py-3 font-bold text-white bg-gray-800 rounded-xl hover:bg-black transition-colors disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="px-6 py-3 font-bold text-white bg-gray-800 rounded-xl hover:bg-black transition-colors disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Keyingi &rarr;
+                Keyingi <i className="fi fi-rr-arrow-right"></i>
               </button>
             </div>
           </div>
 
           <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="font-bold text-gray-500 text-sm sm:text-base text-center sm:text-left">
-              Hamma savollarni ko'rib chiqdingizmi? Yechilmaganlari xato hisoblanadi.
+            <p className="font-bold text-gray-500 text-sm sm:text-base text-center sm:text-left flex items-center gap-2">
+              <i className="fi fi-rr-info"></i> Hamma savollarni ko'rib chiqdingizmi? Yechilmaganlari xato hisoblanadi.
             </p>
             <button 
               onClick={() => setShowFinishModal(true)}
-              className="w-full sm:w-auto px-8 py-4 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 transition-all shadow-md active:scale-95 whitespace-nowrap"
+              className="w-full sm:w-auto px-8 py-4 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center justify-center gap-2"
             >
-              Testni Yakunlash ✅
+              <i className="fi fi-rr-flag"></i> Testni Yakunlash
             </button>
           </div>
         </div>
 
       </div>
 
+      {/* CHIQIB KETISH MODALI */}
       {showExitModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-pop">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">🚪</span>
+            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+              <i className="fi fi-rr-sign-out-alt"></i>
             </div>
             <h3 className="text-xl font-black text-gray-900 mb-3">Chiqib ketish</h3>
             <p className="text-gray-600 mb-8 font-medium">Testni to'xtatmoqchimisiz? Natijalar saqlanmaydi va test bekor qilinadi.</p>
@@ -1573,11 +1598,12 @@ export default function TakeTest() {
         </div>
       )}
 
+      {/* YAKUNLASH MODALI */}
       {showFinishModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-overlay">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center animate-pop">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">📝</span>
+            <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+              <i className="fi fi-rr-flag"></i>
             </div>
             <h3 className="text-xl font-black text-gray-900 mb-3">Yakunlaysizmi?</h3>
             <p className="text-gray-600 mb-8 font-medium">
@@ -1591,17 +1617,18 @@ export default function TakeTest() {
         </div>
       )}
 
+      {/* NATIJA MODALI */}
       {resultData && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md animate-overlay">
           <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl text-center animate-pop border border-gray-100">
             {resultData.isTimeOut && (
               <div className="bg-red-50 text-red-600 py-2 px-4 rounded-xl font-bold mb-6 text-sm flex justify-center items-center gap-2">
-                ⏱️ Vaqt tugadi!
+                <i className="fi fi-rr-clock-three"></i> Vaqt tugadi!
               </div>
             )}
             
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-5xl">✅</span>
+            <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+              <i className="fi fi-rr-check-circle"></i>
             </div>
             
             <h2 className="text-3xl font-black text-gray-900 mb-2">Ajoyib natija!</h2>
@@ -1622,8 +1649,8 @@ export default function TakeTest() {
               </div>
             </div>
 
-            <button onClick={() => router.push("/history")} className="w-full py-5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 text-lg">
-              Tarixni ko'rish 📊
+            <button onClick={() => router.push("/history")} className="w-full py-5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 text-lg flex items-center justify-center gap-2">
+              Tarixni ko'rish <i className="fi fi-rr-chart-histogram"></i>
             </button>
           </div>
         </div>

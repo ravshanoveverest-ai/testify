@@ -54,7 +54,7 @@ export async function GET() {
   }
 }
 
-// 3. BLOKNI O'CHIRISH
+// 3. BLOKNI O'CHIRISH (Original ishlab turgan variant)
 export async function DELETE(request) {
   try {
     const session = await getServerSession(authOptions);
