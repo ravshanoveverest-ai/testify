@@ -1069,6 +1069,7 @@
 //     </div>
 //   );
 // }
+
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -1144,6 +1145,7 @@ export default function TakeTest() {
     }
   }, [timeLeft, step, resultData]);
 
+  // Massivni aralashtirish funksiyasi (Universal)
   const shuffleArray = (array) => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1158,8 +1160,20 @@ export default function TakeTest() {
     if (isNaN(count) || count <= 0) count = 1;
     if (count > test.questions.length) count = test.questions.length;
 
-    const shuffled = shuffleArray(test.questions);
-    setActiveQuestions(shuffled.slice(0, count));
+    // 1. Savollarni aralashtiramiz
+    let shuffledQuestions = shuffleArray(test.questions).slice(0, count);
+
+    // 2. YANGI: Har bir savolning variantlarini ham aralashtiramiz (agar test bo'lsa)
+    if (test.examType !== "written") {
+      shuffledQuestions = shuffledQuestions.map(q => {
+        if (q.options && q.options.length > 0) {
+          return { ...q, options: shuffleArray(q.options) };
+        }
+        return q;
+      });
+    }
+
+    setActiveQuestions(shuffledQuestions);
 
     let mins = parseInt(timerMinutes);
     if (!isNaN(mins) && mins > 0) setTimeLeft(mins * 60);
@@ -1231,7 +1245,7 @@ export default function TakeTest() {
     
     activeQuestions.forEach((q, index) => {
       const userAns = (selectedAnswers[index] || "").toLowerCase().trim();
-      const rightAns = (q.answer || "").toLowerCase().trim();
+      const rightAns = (q.answer || q.correctAnswer || "").toLowerCase().trim();
       
       if (userAns !== "") answeredCount++;
       if (userAns !== "" && userAns === rightAns) correctCount++;
